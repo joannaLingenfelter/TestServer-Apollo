@@ -1,0 +1,17 @@
+query getProfile {
+  userProfile {
+    userProfile {
+      userId
+    }
+    userProfileErrors {
+      ... on ClientError {
+        clientErrorCode: errorCode
+        clientErrorMessage: message
+      }
+      ... on InternalServerError {
+        serverErrorCode: errorCode
+        serverErrorMessage: message
+      }
+    }
+  }
+}

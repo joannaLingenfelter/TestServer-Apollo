@@ -1,3 +1,3 @@
 # TestServer-Apollo
 
-Test server for using Apollo with GraphQL
+Xcode project using Apollo and GraphQL

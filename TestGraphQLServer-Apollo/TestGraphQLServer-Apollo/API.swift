@@ -4,11 +4,12 @@
 import Apollo
 import Foundation
 
-public enum ClientErrorCode: RawRepresentable, Equatable, Hashable, CaseIterable, Apollo.JSONDecodable, Apollo.JSONEncodable {
+public enum ErrorCode: RawRepresentable, Equatable, Hashable, CaseIterable, Apollo.JSONDecodable, Apollo.JSONEncodable {
   public typealias RawValue = String
   case userNotFoundError
   case userNotAutheNtIcatedError
   case userNotAuthorizedError
+  case internalTimeout
   /// Auto generated constant for unknown enum values
   case __unknown(RawValue)
 
@@ -17,6 +18,7 @@ public enum ClientErrorCode: RawRepresentable, Equatable, Hashable, CaseIterable
       case "USER_NOT_FOUND_ERROR": self = .userNotFoundError
       case "USER_NOT_AUTHENtICATED_ERROR": self = .userNotAutheNtIcatedError
       case "USER_NOT_AUTHORIZED_ERROR": self = .userNotAuthorizedError
+      case "INTERNAL_TIMEOUT": self = .internalTimeout
       default: self = .__unknown(rawValue)
     }
   }
@@ -26,93 +28,53 @@ public enum ClientErrorCode: RawRepresentable, Equatable, Hashable, CaseIterable
       case .userNotFoundError: return "USER_NOT_FOUND_ERROR"
       case .userNotAutheNtIcatedError: return "USER_NOT_AUTHENtICATED_ERROR"
       case .userNotAuthorizedError: return "USER_NOT_AUTHORIZED_ERROR"
-      case .__unknown(let value): return value
-    }
-  }
-
-  public static func == (lhs: ClientErrorCode, rhs: ClientErrorCode) -> Bool {
-    switch (lhs, rhs) {
-      case (.userNotFoundError, .userNotFoundError): return true
-      case (.userNotAutheNtIcatedError, .userNotAutheNtIcatedError): return true
-      case (.userNotAuthorizedError, .userNotAuthorizedError): return true
-      case (.__unknown(let lhsValue), .__unknown(let rhsValue)): return lhsValue == rhsValue
-      default: return false
-    }
-  }
-
-  public static var allCases: [ClientErrorCode] {
-    return [
-      .userNotFoundError,
-      .userNotAutheNtIcatedError,
-      .userNotAuthorizedError,
-    ]
-  }
-}
-
-public enum InternalServerErrorCode: RawRepresentable, Equatable, Hashable, CaseIterable, Apollo.JSONDecodable, Apollo.JSONEncodable {
-  public typealias RawValue = String
-  case internalTimeout
-  /// Auto generated constant for unknown enum values
-  case __unknown(RawValue)
-
-  public init?(rawValue: RawValue) {
-    switch rawValue {
-      case "INTERNAL_TIMEOUT": self = .internalTimeout
-      default: self = .__unknown(rawValue)
-    }
-  }
-
-  public var rawValue: RawValue {
-    switch self {
       case .internalTimeout: return "INTERNAL_TIMEOUT"
       case .__unknown(let value): return value
     }
   }
 
-  public static func == (lhs: InternalServerErrorCode, rhs: InternalServerErrorCode) -> Bool {
+  public static func == (lhs: ErrorCode, rhs: ErrorCode) -> Bool {
     switch (lhs, rhs) {
+      case (.userNotFoundError, .userNotFoundError): return true
+      case (.userNotAutheNtIcatedError, .userNotAutheNtIcatedError): return true
+      case (.userNotAuthorizedError, .userNotAuthorizedError): return true
       case (.internalTimeout, .internalTimeout): return true
       case (.__unknown(let lhsValue), .__unknown(let rhsValue)): return lhsValue == rhsValue
       default: return false
     }
   }
 
-  public static var allCases: [InternalServerErrorCode] {
+  public static var allCases: [ErrorCode] {
     return [
+      .userNotFoundError,
+      .userNotAutheNtIcatedError,
+      .userNotAuthorizedError,
       .internalTimeout,
     ]
   }
 }
 
-public final class GetProfileQuery: GraphQLQuery {
+public final class QueryQuery: GraphQLQuery {
   /// The raw GraphQL definition of this operation.
   public let operationDefinition: String =
     """
-    query getProfile {
+    query Query {
       userProfile {
         __typename
-        userProfile {
+        data {
           __typename
           userId
         }
-        userProfileErrors {
+        error {
           __typename
-          ... on ClientError {
-            __typename
-            clientErrorCode: errorCode
-            clientErrorMessage: message
-          }
-          ... on InternalServerError {
-            __typename
-            serverErrorCode: errorCode
-            serverErrorMessage: message
-          }
+          message
+          errorCode
         }
       }
     }
     """
 
-  public let operationName: String = "getProfile"
+  public let operationName: String = "Query"
 
   public init() {
   }
@@ -151,8 +113,8 @@ public final class GetProfileQuery: GraphQLQuery {
       public static var selections: [GraphQLSelection] {
         return [
           GraphQLField("__typename", type: .nonNull(.scalar(String.self))),
-          GraphQLField("userProfile", type: .object(UserProfile.selections)),
-          GraphQLField("userProfileErrors", type: .nonNull(.list(.nonNull(.object(UserProfileError.selections))))),
+          GraphQLField("data", type: .object(Datum.selections)),
+          GraphQLField("error", type: .object(Error.selections)),
         ]
       }
 
@@ -162,8 +124,8 @@ public final class GetProfileQuery: GraphQLQuery {
         self.resultMap = unsafeResultMap
       }
 
-      public init(userProfile: UserProfile? = nil, userProfileErrors: [UserProfileError]) {
-        self.init(unsafeResultMap: ["__typename": "UserProfileResult", "userProfile": userProfile.flatMap { (value: UserProfile) -> ResultMap in value.resultMap }, "userProfileErrors": userProfileErrors.map { (value: UserProfileError) -> ResultMap in value.resultMap }])
+      public init(data: Datum? = nil, error: Error? = nil) {
+        self.init(unsafeResultMap: ["__typename": "UserProfileResult", "data": data.flatMap { (value: Datum) -> ResultMap in value.resultMap }, "error": error.flatMap { (value: Error) -> ResultMap in value.resultMap }])
       }
 
       public var __typename: String {
@@ -175,25 +137,25 @@ public final class GetProfileQuery: GraphQLQuery {
         }
       }
 
-      public var userProfile: UserProfile? {
+      public var data: Datum? {
         get {
-          return (resultMap["userProfile"] as? ResultMap).flatMap { UserProfile(unsafeResultMap: $0) }
+          return (resultMap["data"] as? ResultMap).flatMap { Datum(unsafeResultMap: $0) }
         }
         set {
-          resultMap.updateValue(newValue?.resultMap, forKey: "userProfile")
+          resultMap.updateValue(newValue?.resultMap, forKey: "data")
         }
       }
 
-      public var userProfileErrors: [UserProfileError] {
+      public var error: Error? {
         get {
-          return (resultMap["userProfileErrors"] as! [ResultMap]).map { (value: ResultMap) -> UserProfileError in UserProfileError(unsafeResultMap: value) }
+          return (resultMap["error"] as? ResultMap).flatMap { Error(unsafeResultMap: $0) }
         }
         set {
-          resultMap.updateValue(newValue.map { (value: UserProfileError) -> ResultMap in value.resultMap }, forKey: "userProfileErrors")
+          resultMap.updateValue(newValue?.resultMap, forKey: "error")
         }
       }
 
-      public struct UserProfile: GraphQLSelectionSet {
+      public struct Datum: GraphQLSelectionSet {
         public static let possibleTypes: [String] = ["UserProfile"]
 
         public static var selections: [GraphQLSelection] {
@@ -232,17 +194,14 @@ public final class GetProfileQuery: GraphQLQuery {
         }
       }
 
-      public struct UserProfileError: GraphQLSelectionSet {
-        public static let possibleTypes: [String] = ["ClientError", "InternalServerError"]
+      public struct Error: GraphQLSelectionSet {
+        public static let possibleTypes: [String] = ["Error"]
 
         public static var selections: [GraphQLSelection] {
           return [
-            GraphQLTypeCase(
-              variants: ["ClientError": AsClientError.selections, "InternalServerError": AsInternalServerError.selections],
-              default: [
-                GraphQLField("__typename", type: .nonNull(.scalar(String.self))),
-              ]
-            )
+            GraphQLField("__typename", type: .nonNull(.scalar(String.self))),
+            GraphQLField("message", type: .nonNull(.scalar(String.self))),
+            GraphQLField("errorCode", type: .nonNull(.scalar(ErrorCode.self))),
           ]
         }
 
@@ -252,12 +211,8 @@ public final class GetProfileQuery: GraphQLQuery {
           self.resultMap = unsafeResultMap
         }
 
-        public static func makeClientError(clientErrorCode: ClientErrorCode, clientErrorMessage: String) -> UserProfileError {
-          return UserProfileError(unsafeResultMap: ["__typename": "ClientError", "clientErrorCode": clientErrorCode, "clientErrorMessage": clientErrorMessage])
-        }
-
-        public static func makeInternalServerError(serverErrorCode: InternalServerErrorCode, serverErrorMessage: String) -> UserProfileError {
-          return UserProfileError(unsafeResultMap: ["__typename": "InternalServerError", "serverErrorCode": serverErrorCode, "serverErrorMessage": serverErrorMessage])
+        public init(message: String, errorCode: ErrorCode) {
+          self.init(unsafeResultMap: ["__typename": "Error", "message": message, "errorCode": errorCode])
         }
 
         public var __typename: String {
@@ -269,125 +224,21 @@ public final class GetProfileQuery: GraphQLQuery {
           }
         }
 
-        public var asClientError: AsClientError? {
+        public var message: String {
           get {
-            if !AsClientError.possibleTypes.contains(__typename) { return nil }
-            return AsClientError(unsafeResultMap: resultMap)
+            return resultMap["message"]! as! String
           }
           set {
-            guard let newValue = newValue else { return }
-            resultMap = newValue.resultMap
+            resultMap.updateValue(newValue, forKey: "message")
           }
         }
 
-        public struct AsClientError: GraphQLSelectionSet {
-          public static let possibleTypes: [String] = ["ClientError"]
-
-          public static var selections: [GraphQLSelection] {
-            return [
-              GraphQLField("__typename", type: .nonNull(.scalar(String.self))),
-              GraphQLField("__typename", type: .nonNull(.scalar(String.self))),
-              GraphQLField("errorCode", alias: "clientErrorCode", type: .nonNull(.scalar(ClientErrorCode.self))),
-              GraphQLField("message", alias: "clientErrorMessage", type: .nonNull(.scalar(String.self))),
-            ]
-          }
-
-          public private(set) var resultMap: ResultMap
-
-          public init(unsafeResultMap: ResultMap) {
-            self.resultMap = unsafeResultMap
-          }
-
-          public init(clientErrorCode: ClientErrorCode, clientErrorMessage: String) {
-            self.init(unsafeResultMap: ["__typename": "ClientError", "clientErrorCode": clientErrorCode, "clientErrorMessage": clientErrorMessage])
-          }
-
-          public var __typename: String {
-            get {
-              return resultMap["__typename"]! as! String
-            }
-            set {
-              resultMap.updateValue(newValue, forKey: "__typename")
-            }
-          }
-
-          public var clientErrorCode: ClientErrorCode {
-            get {
-              return resultMap["clientErrorCode"]! as! ClientErrorCode
-            }
-            set {
-              resultMap.updateValue(newValue, forKey: "clientErrorCode")
-            }
-          }
-
-          public var clientErrorMessage: String {
-            get {
-              return resultMap["clientErrorMessage"]! as! String
-            }
-            set {
-              resultMap.updateValue(newValue, forKey: "clientErrorMessage")
-            }
-          }
-        }
-
-        public var asInternalServerError: AsInternalServerError? {
+        public var errorCode: ErrorCode {
           get {
-            if !AsInternalServerError.possibleTypes.contains(__typename) { return nil }
-            return AsInternalServerError(unsafeResultMap: resultMap)
+            return resultMap["errorCode"]! as! ErrorCode
           }
           set {
-            guard let newValue = newValue else { return }
-            resultMap = newValue.resultMap
-          }
-        }
-
-        public struct AsInternalServerError: GraphQLSelectionSet {
-          public static let possibleTypes: [String] = ["InternalServerError"]
-
-          public static var selections: [GraphQLSelection] {
-            return [
-              GraphQLField("__typename", type: .nonNull(.scalar(String.self))),
-              GraphQLField("__typename", type: .nonNull(.scalar(String.self))),
-              GraphQLField("errorCode", alias: "serverErrorCode", type: .nonNull(.scalar(InternalServerErrorCode.self))),
-              GraphQLField("message", alias: "serverErrorMessage", type: .nonNull(.scalar(String.self))),
-            ]
-          }
-
-          public private(set) var resultMap: ResultMap
-
-          public init(unsafeResultMap: ResultMap) {
-            self.resultMap = unsafeResultMap
-          }
-
-          public init(serverErrorCode: InternalServerErrorCode, serverErrorMessage: String) {
-            self.init(unsafeResultMap: ["__typename": "InternalServerError", "serverErrorCode": serverErrorCode, "serverErrorMessage": serverErrorMessage])
-          }
-
-          public var __typename: String {
-            get {
-              return resultMap["__typename"]! as! String
-            }
-            set {
-              resultMap.updateValue(newValue, forKey: "__typename")
-            }
-          }
-
-          public var serverErrorCode: InternalServerErrorCode {
-            get {
-              return resultMap["serverErrorCode"]! as! InternalServerErrorCode
-            }
-            set {
-              resultMap.updateValue(newValue, forKey: "serverErrorCode")
-            }
-          }
-
-          public var serverErrorMessage: String {
-            get {
-              return resultMap["serverErrorMessage"]! as! String
-            }
-            set {
-              resultMap.updateValue(newValue, forKey: "serverErrorMessage")
-            }
+            resultMap.updateValue(newValue, forKey: "errorCode")
           }
         }
       }

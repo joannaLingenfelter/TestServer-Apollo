@@ -1,17 +1,11 @@
-query getProfile {
+query Query {
   userProfile {
-    userProfile {
+    data {
       userId
     }
-    userProfileErrors {
-      ... on ClientError {
-        clientErrorCode: errorCode
-        clientErrorMessage: message
-      }
-      ... on InternalServerError {
-        serverErrorCode: errorCode
-        serverErrorMessage: message
-      }
+    error {
+      message
+      errorCode
     }
   }
 }

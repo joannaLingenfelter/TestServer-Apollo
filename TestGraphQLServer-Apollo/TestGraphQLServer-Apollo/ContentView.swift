@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-typealias UserProfile = GetProfileQuery.Data.UserProfile.UserProfile
+typealias UserProfile = QueryQuery.Data.UserProfile.Datum
 
 enum NetworkError: LocalizedError {
     case unknownError
@@ -15,7 +15,7 @@ enum NetworkError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unknownError:
-            return "An unknown error has occured"
+            return "An unknown error has occurred"
         }
     }
 }
@@ -25,6 +25,7 @@ struct ContentView: View {
     @State var error: String?
     @State var userProfile: UserProfile?
     @State var isLoading: Bool = false
+    @State var text: String = ""
 
     var body: some View {
         VStack(spacing: 15) {
@@ -60,10 +61,10 @@ struct ContentView: View {
 
     private func fetchUserProfile() async throws -> UserProfile {
         try await withCheckedThrowingContinuation { continuation in
-            Network.shared.apollo.fetch(query: GetProfileQuery()) { result in
+            Network.shared.apollo.fetch(query: QueryQuery()) { result in
               switch result {
               case .success(let graphQLResult):
-                  guard let userProfile = graphQLResult.data?.userProfile.userProfile else {
+                  guard let userProfile = graphQLResult.data?.userProfile.data else {
                       continuation.resume(throwing: NetworkError.unknownError)
                       return
                   }
